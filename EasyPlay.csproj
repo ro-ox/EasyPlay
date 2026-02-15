@@ -1,0 +1,52 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UseWPF>true</UseWPF>
+	  <AssemblyName>EasyPlay</AssemblyName>
+	  <RootNamespace>EasyPlay</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Remove="Assets\Fonts\Awesome_brands.otf" />
+    <None Remove="Assets\Fonts\Awesome_regular.otf" />
+    <None Remove="Assets\Fonts\Awesome_solid.otf" />
+    <None Remove="Assets\Fonts\Vazirmatn.ttf" />
+    <None Remove="Assets\Images\app-icon.ico" />
+  </ItemGroup>
+
+	<ItemGroup>
+		<PackageReference Include="LibVLCSharp" Version="3.9.0" />
+		<PackageReference Include="LibVLCSharp.WPF" Version="3.9.0" />
+		<PackageReference Include="VideoLAN.LibVLC.Windows" Version="3.0.20" />
+		<PackageReference Include="Microsoft.VisualBasic" Version="10.3.0" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <Resource Include="Assets\Fonts\Awesome_regular.otf">
+	    <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+	  </Resource>
+	  <Resource Include="Assets\Fonts\Awesome_solid.otf">
+	    <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+	  </Resource>
+	  <Resource Include="Assets\Fonts\Vazirmatn.ttf">
+	    <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+	  </Resource>
+	</ItemGroup>
+
+	<ItemGroup>
+	  <Resource Include="Assets\Fonts\Awesome_brands.otf">
+	    <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+	  </Resource>
+	</ItemGroup>
+
+	<ItemGroup>
+	  <Resource Include="Assets\Images\app-icon.ico">
+	    <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+	  </Resource>
+	</ItemGroup>
+
+</Project>

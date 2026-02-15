@@ -1,0 +1,187 @@
+﻿<Window
+    x:Class="EasyPlay.Views.PlaylistViewDialog"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    Title="پلی‌لیست"
+    Width="700"
+    Height="500"
+    Background="#1a1a1a"
+    FlowDirection="RightToLeft"
+    WindowStartupLocation="CenterOwner">
+
+    <Window.Resources>
+        <Style x:Key="DialogButtonStyle" TargetType="Button">
+            <Setter Property="Background" Value="#404040" />
+            <Setter Property="Foreground" Value="#ffffff" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Padding" Value="15,8" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border
+                            x:Name="border"
+                            Padding="{TemplateBinding Padding}"
+                            Background="{TemplateBinding Background}"
+                            CornerRadius="6">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="border" Property="Background" Value="#505050" />
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="border" Property="Background" Value="#606060" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style
+            x:Key="PrimaryButtonStyle"
+            BasedOn="{StaticResource DialogButtonStyle}"
+            TargetType="Button">
+            <Setter Property="Background" Value="#ff1313" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border
+                            x:Name="border"
+                            Padding="{TemplateBinding Padding}"
+                            Background="{TemplateBinding Background}"
+                            CornerRadius="6">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="border" Property="Background" Value="#d93a9b" />
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="border" Property="Background" Value="#a01270" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style TargetType="ListBox">
+            <Setter Property="Background" Value="#2a2a2a" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Padding" Value="10" />
+        </Style>
+
+        <Style TargetType="ListBoxItem">
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ListBoxItem">
+                        <Border
+                            x:Name="Bd"
+                            Margin="0,0,0,8"
+                            Padding="15"
+                            Background="#252525"
+                            BorderBrush="#404040"
+                            BorderThickness="1"
+                            CornerRadius="8"
+                            SnapsToDevicePixels="true">
+                            <ContentPresenter
+                                HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+                                SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="#303030" />
+                            </Trigger>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="#353535" />
+                                <Setter TargetName="Bd" Property="BorderBrush" Value="#ff1313" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Window.Resources>
+
+    <Border
+        Margin="20"
+        Padding="20"
+        Background="#252525"
+        CornerRadius="10">
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+
+            <!--  Header  -->
+            <StackPanel Grid.Row="0" Margin="0,0,0,15">
+                <TextBlock
+                    x:Name="PlaylistNameText"
+                    FontSize="16"
+                    FontWeight="Bold"
+                    Foreground="#ffffff"
+                    Text="پلی‌لیست من" />
+            </StackPanel>
+
+            <!--  Videos List  -->
+            <ListBox x:Name="VideosListBox" Grid.Row="1">
+                <ListBox.ItemTemplate>
+                    <DataTemplate>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+
+                            <StackPanel Grid.Column="0">
+                                <TextBlock
+                                    FontSize="14"
+                                    FontWeight="SemiBold"
+                                    Foreground="#ffffff"
+                                    Text="{Binding Title}" />
+                                <TextBlock
+                                    Margin="0,5,0,0"
+                                    FontSize="11"
+                                    Foreground="#888888"
+                                    Text="{Binding VideoUrl}"
+                                    TextTrimming="CharacterEllipsis" />
+                            </StackPanel>
+
+                            <StackPanel Grid.Column="1" Orientation="Horizontal">
+                                <Button
+                                    Width="80"
+                                    Margin="5,0"
+                                    Click="PlayVideoButton_Click"
+                                    Content="پخش"
+                                    Style="{StaticResource PrimaryButtonStyle}"
+                                    Tag="{Binding}" />
+                                <Button
+                                    Width="80"
+                                    Margin="5,0"
+                                    Click="RemoveVideoButton_Click"
+                                    Content="حذف"
+                                    Style="{StaticResource DialogButtonStyle}"
+                                    Tag="{Binding}" />
+                            </StackPanel>
+                        </Grid>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+
+            <!--  Footer  -->
+            <Button
+                Grid.Row="2"
+                Margin="0,15,0,0"
+                HorizontalAlignment="Left"
+                Click="CloseButton_Click"
+                Content="بستن"
+                Style="{StaticResource DialogButtonStyle}" />
+        </Grid>
+    </Border>
+</Window>
