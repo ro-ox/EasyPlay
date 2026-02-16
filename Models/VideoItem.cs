@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Globalization;
 
 namespace EasyPlay.Models
 {
@@ -17,8 +18,53 @@ namespace EasyPlay.Models
         public TimeSpan? Duration { get; set; }
         public TimeSpan? LastPosition { get; set; }
 
-        public string DisplayDate => AddedDate.ToString("yyyy/MM/dd HH:mm");
+        public string DisplayDate => AddedDate.ToString("yyyy/MM/dd HH:mm") ?? "";
+
+        public string DisplayDateShamsi
+        {
+            get
+            {
+                if (string.IsNullOrWhiteSpace(DisplayDate))
+                    return "";
+
+                if (!DateTime.TryParse(DisplayDate, out var date))
+                    return DisplayDate!;
+
+                var pc = new PersianCalendar();
+
+                return string.Format(
+                    "{0}/{1:00}/{2:00} {3:00}:{4:00}",
+                    pc.GetYear(date),
+                    pc.GetMonth(date),
+                    pc.GetDayOfMonth(date),
+                    pc.GetHour(date),
+                    pc.GetMinute(date)
+                );
+            }
+        }
+
         public string DisplayLastPlayed => LastPlayedDate?.ToString("yyyy/MM/dd HH:mm") ?? "هرگز";
+        public string DisplayLastPlayedShamsi
+        {
+            get
+            {
+                if (!LastPlayedDate.HasValue)
+                    return "هرگز";
+
+                var pc = new PersianCalendar();
+                var date = LastPlayedDate.Value;
+
+                return string.Format(
+                    "{0}/{1:00}/{2:00} {3:00}:{4:00}",
+                    pc.GetYear(date),
+                    pc.GetMonth(date),
+                    pc.GetDayOfMonth(date),
+                    pc.GetHour(date),
+                    pc.GetMinute(date)
+                );
+            }
+        }
+
         public string DisplayDuration => Duration.HasValue
             ? $"{(int)Duration.Value.TotalHours:D2}:{Duration.Value.Minutes:D2}:{Duration.Value.Seconds:D2}"
             : "--:--:--";

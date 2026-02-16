@@ -4,14 +4,17 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-    Title="EasyPlay - پخش کننده آنلاین"
+    Title="EasyPlay - Online Player"
     Width="900"
     Height="900"
     MinWidth="800"
     MinHeight="600"
-    Background="#1a1a1a"
-    FlowDirection="RightToLeft"
+    AllowsTransparency="True"
+    Background="Transparent"
+    Icon="/Assets/Images/app-icon.ico"
+    ResizeMode="CanResize"
     WindowStartupLocation="CenterScreen"
+    WindowStyle="None"
     mc:Ignorable="d">
 
     <Window.Resources>
@@ -215,6 +218,7 @@
             <Setter Property="Height" Value="40" />
             <Setter Property="Cursor" Value="Hand" />
             <Setter Property="Padding" Value="5" />
+            <Setter Property="FlowDirection" Value="LeftToRight" />
             <Setter Property="HorizontalContentAlignment" Value="Center" />
             <Setter Property="VerticalContentAlignment" Value="Center" />
             <Setter Property="Template">
@@ -269,7 +273,7 @@
                                                         SnapsToDevicePixels="True" />
                                                     <ControlTemplate.Triggers>
                                                         <Trigger Property="IsMouseOver" Value="True">
-                                                            <Setter TargetName="ThumbBorder" Property="Background" Value="#e238b3" />
+                                                            <Setter TargetName="ThumbBorder" Property="Background" Value="#e23838" />
                                                         </Trigger>
                                                     </ControlTemplate.Triggers>
                                                 </ControlTemplate>
@@ -285,402 +289,579 @@
         </Style>
     </Window.Resources>
 
-    <Grid>
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="*" />
-            <RowDefinition Height="Auto" />
-        </Grid.RowDefinitions>
-
+    <DockPanel LastChildFill="True">
         <!--  Header  -->
         <Border
-            Grid.Row="0"
-            Padding="20,15"
-            Background="#252525"
-            BorderBrush="#303030"
-            BorderThickness="0,0,0,1">
-            <Grid>
-                <StackPanel Orientation="Horizontal">
-                    <TextBlock
-                        VerticalAlignment="Center"
-                        FontSize="18"
-                        FontWeight="Bold"
-                        Foreground="#ff1313"
-                        Text="📺 " />
-                    <TextBlock
-                        VerticalAlignment="Center"
-                        FontSize="18"
-                        FontWeight="Bold"
-                        Foreground="#ffffff"
-                        Text="EasyPlay" />
-                </StackPanel>
-            </Grid>
-        </Border>
-
-        <!--  Main Content  -->
-        <TabControl Grid.Row="1" Margin="0,10,0,0">
-            <!--  Tab 1: Play  -->
-            <TabItem Header="🎬 پخش">
-                <Border
-                    Margin="20"
-                    Padding="30"
-                    Background="#252525"
-                    CornerRadius="12">
-                    <ScrollViewer VerticalScrollBarVisibility="Auto">
-                        <ScrollViewer.Resources>
-                            <Style BasedOn="{StaticResource VScrollBarStyle}" TargetType="ScrollBar" />
-                        </ScrollViewer.Resources>
-                        <StackPanel>
-                            <TextBlock
-                                Margin="0,0,0,20"
-                                FontSize="16"
-                                FontWeight="SemiBold"
-                                Foreground="#ffffff"
-                                Text="پخش ویدیوی آنلاین" />
-
-                            <!--  Video URL  -->
-                            <TextBlock
-                                Margin="0,0,0,8"
-                                FontSize="13"
-                                Foreground="#cccccc"
-                                Text="لینک ویدیو:" />
-                            <TextBox
-                                x:Name="VideoUrlTextBox"
-                                Height="40"
-                                Style="{StaticResource TextBoxFieldInSign}" />
-
-                            <!--  Video Title  -->
-                            <TextBlock
-                                Margin="0,20,0,8"
-                                FontSize="13"
-                                Foreground="#cccccc"
-                                Text="عنوان ویدیو:" />
-                            <TextBox
-                                x:Name="VideoTitleTextBox"
-                                Height="40"
-                                Style="{StaticResource TextBoxFieldInSign}" />
-
-                            <!--  Subtitle URL  -->
-                            <TextBlock
-                                Margin="0,20,0,8"
-                                FontSize="13"
-                                Foreground="#cccccc"
-                                Text="لینک زیرنویس (اختیاری):" />
-                            <TextBox
-                                x:Name="SubtitleUrlTextBox"
-                                Height="40"
-                                Style="{StaticResource TextBoxFieldInSign}"
-                                Text="" />
-
-                            <!--  Download Options  -->
-                            <Border
-                                Margin="0,25,0,0"
-                                Padding="15"
-                                Background="#2a2a2a"
-                                CornerRadius="8">
-                                <StackPanel>
-                                    <CheckBox
-                                        x:Name="DownloadVideoCheckBox"
-                                        Margin="0,0,0,10"
-                                        Checked="DownloadVideoCheckBox_Changed"
-                                        Content="دانلود همزمان ویدیو"
-                                        Style="{StaticResource ModernCheckBoxStyle}"
-                                        Unchecked="DownloadVideoCheckBox_Changed" />
-
-                                    <StackPanel
-                                        x:Name="DownloadOptionsPanel"
-                                        IsEnabled="False"
-                                        Opacity="0.5">
-                                        <TextBlock
-                                            Margin="0,10,0,8"
-                                            FontSize="12"
-                                            Foreground="#aaaaaa"
-                                            Text="مسیر ذخیره:" />
-                                        <Grid>
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="*" />
-                                                <ColumnDefinition Width="Auto" />
-                                            </Grid.ColumnDefinitions>
-                                            <TextBox
-                                                x:Name="SavePathTextBox"
-                                                Grid.Column="0"
-                                                Height="36"
-                                                IsReadOnly="True"
-                                                Style="{StaticResource TextBoxFieldInSign}" />
-                                            <Button
-                                                Grid.Column="1"
-                                                Width="100"
-                                                Margin="10,0,0,0"
-                                                Click="BrowseSavePath_Click"
-                                                Content="انتخاب..."
-                                                Style="{StaticResource ModernButtonStyle}" />
-                                        </Grid>
-                                    </StackPanel>
-                                </StackPanel>
-                            </Border>
-
-                            <!--  Play Button  -->
-                            <Button
-                                Margin="0,30,0,0"
-                                Padding="20,12"
-                                Click="PlayButton_Click"
-                                Content="▶ شروع پخش"
-                                FontSize="15"
-                                FontWeight="SemiBold"
-                                Style="{StaticResource PrimaryButtonStyle}" />
-
-                            <!--  Add to Playlist Button  -->
-                            <Button
-                                Margin="0,10,0,0"
-                                Click="AddToPlaylistButton_Click"
-                                Content="➕ افزودن به پلی‌لیست"
-                                Style="{StaticResource ModernButtonStyle}" />
-                        </StackPanel>
-                    </ScrollViewer>
-                </Border>
-            </TabItem>
-
-            <!--  Tab 2: Playlist  -->
-            <TabItem Header="📋 پلی‌لیست">
-                <Border
-                    Margin="20"
-                    Padding="20"
-                    Background="#252525"
-                    CornerRadius="12">
-                    <Grid>
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="*" />
-                        </Grid.RowDefinitions>
-
-                        <!--  Playlist Header  -->
-                        <Grid Grid.Row="0" Margin="0,0,0,15">
-                            <TextBlock
-                                VerticalAlignment="Center"
-                                FontSize="16"
-                                FontWeight="SemiBold"
-                                Foreground="#ffffff"
-                                Text="پلی‌لیست‌های من" />
-                            <Button
-                                HorizontalAlignment="Left"
-                                Click="CreatePlaylistButton_Click"
-                                Content="+ پلی‌لیست جدید"
-                                Style="{StaticResource PrimaryButtonStyle}" />
-                        </Grid>
-
-                        <!--  Playlists List  -->
-                        <ListBox
-                            x:Name="PlaylistsListBox"
-                            Grid.Row="1"
-                            SelectionChanged="PlaylistsListBox_SelectionChanged">
-                            <ListBox.ItemTemplate>
-                                <DataTemplate>
-                                    <Grid>
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="*" />
-                                            <ColumnDefinition Width="Auto" />
-                                        </Grid.ColumnDefinitions>
-
-                                        <StackPanel Grid.Column="0">
-                                            <TextBlock
-                                                FontSize="14"
-                                                FontWeight="SemiBold"
-                                                Foreground="#ffffff"
-                                                Text="{Binding Name}" />
-                                            <TextBlock
-                                                Margin="0,5,0,0"
-                                                FontSize="11"
-                                                Foreground="#888888">
-                                                <Run Text="{Binding VideoCount}" />
-                                                <Run Text="ویدیو •" />
-                                                <Run Text="{Binding DisplayDate}" />
-                                            </TextBlock>
-                                        </StackPanel>
-
-                                        <StackPanel Grid.Column="1" Orientation="Horizontal">
-                                            <Button
-                                                Width="80"
-                                                Margin="5,0"
-                                                Click="ViewPlaylistButton_Click"
-                                                Content="مشاهده"
-                                                Style="{StaticResource ModernButtonStyle}"
-                                                Tag="{Binding}" />
-                                            <Button
-                                                Width="80"
-                                                Margin="5,0"
-                                                Click="DeletePlaylistButton_Click"
-                                                Content="حذف"
-                                                Style="{StaticResource ModernButtonStyle}"
-                                                Tag="{Binding}" />
-                                        </StackPanel>
-                                    </Grid>
-                                </DataTemplate>
-                            </ListBox.ItemTemplate>
-                        </ListBox>
-                    </Grid>
-                </Border>
-            </TabItem>
-
-            <!--  Tab 3: History  -->
-            <TabItem Header="🕐 تاریخچه">
-                <Border
-                    Margin="20"
-                    Padding="20"
-                    Background="#252525"
-                    CornerRadius="12">
-                    <Grid>
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="*" />
-                        </Grid.RowDefinitions>
-
-                        <!--  History Header  -->
-                        <Grid Grid.Row="0" Margin="0,0,0,15">
-                            <TextBlock
-                                VerticalAlignment="Center"
-                                FontSize="16"
-                                FontWeight="SemiBold"
-                                Foreground="#ffffff"
-                                Text="تاریخچه پخش" />
-                            <Button
-                                HorizontalAlignment="Left"
-                                Click="ClearHistoryButton_Click"
-                                Content="پاک کردن تاریخچه"
-                                Style="{StaticResource ModernButtonStyle}" />
-                        </Grid>
-
-                        <!--  History List  -->
-                        <ListBox x:Name="HistoryListBox" Grid.Row="1">
-                            <ListBox.ItemTemplate>
-                                <DataTemplate>
-                                    <Grid>
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="*" />
-                                            <ColumnDefinition Width="Auto" />
-                                        </Grid.ColumnDefinitions>
-
-                                        <StackPanel Grid.Column="0">
-                                            <TextBlock
-                                                FontSize="14"
-                                                FontWeight="SemiBold"
-                                                Foreground="#ffffff"
-                                                Text="{Binding Title}" />
-                                            <TextBlock
-                                                Margin="0,5,0,0"
-                                                FontSize="11"
-                                                Foreground="#888888"
-                                                Text="{Binding DisplayLastPlayed}"
-                                                TextTrimming="CharacterEllipsis" />
-                                        </StackPanel>
-
-                                        <StackPanel Grid.Column="1" Orientation="Horizontal">
-                                            <Button
-                                                Width="80"
-                                                Margin="5,0"
-                                                Click="PlayFromHistoryButton_Click"
-                                                Content="پخش"
-                                                Style="{StaticResource PrimaryButtonStyle}"
-                                                Tag="{Binding}" />
-                                            <Button
-                                                Width="80"
-                                                Margin="5,0"
-                                                Click="RemoveFromHistoryButton_Click"
-                                                Content="حذف"
-                                                Style="{StaticResource ModernButtonStyle}"
-                                                Tag="{Binding}" />
-                                        </StackPanel>
-                                    </Grid>
-                                </DataTemplate>
-                            </ListBox.ItemTemplate>
-                        </ListBox>
-                    </Grid>
-                </Border>
-            </TabItem>
-        </TabControl>
-
-        <!--  Download Panel (Bottom)  -->
-        <Border
-            x:Name="DownloadPanel"
-            Grid.Row="2"
-            Padding="20,15"
-            Background="#252525"
-            BorderBrush="#303030"
-            BorderThickness="0,1,0,0"
-            Visibility="Collapsed">
+            Height="35"
+            Background="#0f0f0f"
+            BorderBrush="#ff1313"
+            BorderThickness="1"
+            CornerRadius="10,10,0,0"
+            DockPanel.Dock="Top"
+            MouseLeftButtonDown="TitleBar_MouseLeftButtonDown">
             <Grid>
                 <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
 
-                <StackPanel Grid.Column="0">
+                <!--  App Icon & Title  -->
+                <StackPanel
+                    Grid.Column="0"
+                    Margin="10,0,0,0"
+                    VerticalAlignment="Center"
+                    Orientation="Horizontal">
+
+                    <!--  App Icon  -->
+                    <Image
+                        Width="20"
+                        Height="20"
+                        Margin="0,0,8,0"
+                        RenderOptions.BitmapScalingMode="HighQuality"
+                        Source="/Assets/Images/app-icon.ico" />
+
+                    <!--  Title  -->
+                    <TextBlock
+                        VerticalAlignment="Center"
+                        FontSize="13"
+                        FontWeight="SemiBold"
+                        Foreground="#ff1313"
+                        Text="EasyPlay" />
+                </StackPanel>
+
+                <!--  Window Control Buttons  -->
+                <StackPanel Grid.Column="2" Orientation="Horizontal">
+
+                    <!--  Minimize Button  -->
+                    <Button
+                        Width="45"
+                        Height="35"
+                        Click="MinimizeButton_Click"
+                        Style="{StaticResource TitleBarButtonStyle}"
+                        ToolTip="کمینه کردن">
+                        <TextBlock
+                            FontFamily="{StaticResource AppFontAwesomeRegular}"
+                            FontSize="14"
+                            Foreground="#b0b0b0"
+                            Text="&#xf068;" />
+                    </Button>
+
+                    <!--  Restore Default Size Button  -->
+                    <Button
+                        x:Name="RestoreDefaultButton"
+                        Width="45"
+                        Height="35"
+                        Click="RestoreDefaultButton_Click"
+                        Style="{StaticResource TitleBarButtonStyle}"
+                        ToolTip="بازگشت به اندازه پیش‌فرض">
+                        <TextBlock
+                            FontFamily="{StaticResource AppFontAwesomeRegular}"
+                            FontSize="14"
+                            Foreground="#b0b0b0"
+                            Text="&#xf065;" />
+                    </Button>
+
+                    <!--  Maximize/Restore Button  -->
+                    <Button
+                        x:Name="MaximizeButton"
+                        Width="45"
+                        Height="35"
+                        Click="MaximizeButton_Click"
+                        Style="{StaticResource TitleBarButtonStyle}"
+                        ToolTip="بزرگ کردن / بازگشت">
+                        <TextBlock
+                            x:Name="MaximizeIcon"
+                            FontFamily="{StaticResource AppFontAwesomeRegular}"
+                            FontSize="14"
+                            Foreground="#b0b0b0"
+                            Text="&#xf2d0;" />
+                    </Button>
+
+                    <!--  Close Button  -->
+                    <Button
+                        Width="45"
+                        Height="35"
+                        Click="CloseButton_Click"
+                        Style="{StaticResource TitleBarCloseButtonStyle}"
+                        ToolTip="بستن">
+                        <TextBlock
+                            FontFamily="{StaticResource AppFontAwesomeRegular}"
+                            FontSize="14"
+                            Foreground="#b0b0b0"
+                            Text="&#xf00d;" />
+                    </Button>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <Border
+            Background="#1a1a1a"
+            BorderBrush="#ff1313"
+            BorderThickness="1,0,1,1"
+            CornerRadius="0,0,10,10">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+
+                <!--  Header  -->
+                <Border
+                    Grid.Row="0"
+                    Padding="20,15"
+                    Background="#252525"
+                    BorderBrush="#303030"
+                    BorderThickness="0,0,0,1"
+                    FlowDirection="RightToLeft">
+                    <Grid>
+                        <StackPanel Orientation="Horizontal">
+                            <Image Width="50" Margin="0,0,10,0">
+                                <Image.Source>
+                                    <BitmapImage DecodePixelWidth="250" UriSource="\Assets\Images\app-icon.ico" />
+                                </Image.Source>
+                            </Image>
+                            <TextBlock
+                                VerticalAlignment="Center"
+                                FontSize="18"
+                                FontWeight="Bold"
+                                Foreground="#ffffff"
+                                Text="EasyPlay" />
+                        </StackPanel>
+                    </Grid>
+                </Border>
+
+                <!--  Main Content  -->
+                <TabControl
+                    Grid.Row="1"
+                    MinHeight="500"
+                    Margin="20,10"
+                    FlowDirection="RightToLeft">
+                    <!--  Tab 1: Play  -->
+                    <TabItem Header="🎬 پخش">
+                        <Border
+                            Margin="20"
+                            Padding="30"
+                            Background="#252525"
+                            CornerRadius="12">
+                            <ScrollViewer VerticalScrollBarVisibility="Auto">
+                                <ScrollViewer.Resources>
+                                    <Style BasedOn="{StaticResource VScrollBarStyle}" TargetType="ScrollBar" />
+                                </ScrollViewer.Resources>
+                                <StackPanel>
+                                    <TextBlock
+                                        Margin="0,0,0,20"
+                                        FontSize="16"
+                                        FontWeight="SemiBold"
+                                        Foreground="#ffffff"
+                                        Text="پخش ویدیوی آنلاین" />
+
+                                    <!--  Video URL  -->
+                                    <TextBlock
+                                        Margin="0,0,0,8"
+                                        FontSize="13"
+                                        Foreground="#cccccc"
+                                        Text="لینک ویدیو:" />
+                                    <TextBox
+                                        x:Name="VideoUrlTextBox"
+                                        Height="40"
+                                        Style="{StaticResource TextBoxFieldInSign}" />
+
+                                    <!--  Video Title  -->
+                                    <TextBlock
+                                        Margin="0,20,0,8"
+                                        FontSize="13"
+                                        Foreground="#cccccc"
+                                        Text="عنوان ویدیو:" />
+                                    <TextBox
+                                        x:Name="VideoTitleTextBox"
+                                        Height="40"
+                                        Style="{StaticResource TextBoxFieldInSign}" />
+
+                                    <!--  Subtitle URL  -->
+                                    <TextBlock
+                                        Margin="0,20,0,8"
+                                        FontSize="13"
+                                        Foreground="#cccccc"
+                                        Text="لینک زیرنویس (اختیاری):" />
+                                    <TextBox
+                                        x:Name="SubtitleUrlTextBox"
+                                        Height="40"
+                                        Style="{StaticResource TextBoxFieldInSign}"
+                                        Text="" />
+
+                                    <!--  Download Options  -->
+                                    <Border
+                                        Margin="0,25,0,0"
+                                        Padding="15"
+                                        Background="#2a2a2a"
+                                        CornerRadius="8"
+                                        IsEnabled="False">
+                                        <StackPanel>
+                                            <CheckBox
+                                                x:Name="DownloadVideoCheckBox"
+                                                Margin="0,0,0,10"
+                                                Checked="DownloadVideoCheckBox_Changed"
+                                                Content="دانلود همزمان ویدیو - هنوز پیاده سازی نشده :("
+                                                Style="{StaticResource ModernCheckBoxStyle}"
+                                                Unchecked="DownloadVideoCheckBox_Changed" />
+
+                                            <StackPanel
+                                                x:Name="DownloadOptionsPanel"
+                                                IsEnabled="False"
+                                                Opacity="0.5">
+                                                <TextBlock
+                                                    Margin="0,10,0,8"
+                                                    FontSize="12"
+                                                    Foreground="#aaaaaa"
+                                                    Text="مسیر ذخیره:" />
+                                                <Grid>
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="*" />
+                                                        <ColumnDefinition Width="Auto" />
+                                                    </Grid.ColumnDefinitions>
+                                                    <TextBox
+                                                        x:Name="SavePathTextBox"
+                                                        Grid.Column="0"
+                                                        Height="36"
+                                                        IsReadOnly="True"
+                                                        Style="{StaticResource TextBoxFieldInSign}" />
+                                                    <Button
+                                                        Grid.Column="1"
+                                                        Width="100"
+                                                        Margin="10,0,0,0"
+                                                        Click="BrowseSavePath_Click"
+                                                        Content="انتخاب..."
+                                                        Style="{StaticResource ModernButtonStyle}" />
+                                                </Grid>
+                                            </StackPanel>
+                                        </StackPanel>
+                                    </Border>
+
+                                    <!--  Play Button  -->
+                                    <Button
+                                        Margin="0,30,0,0"
+                                        Padding="20,12"
+                                        Click="PlayButton_Click"
+                                        Content="▶ شروع پخش"
+                                        FontSize="15"
+                                        FontWeight="SemiBold"
+                                        Style="{StaticResource PrimaryButtonStyle}" />
+
+                                    <!--  Add to Playlist Button  -->
+                                    <Button
+                                        Margin="0,10,0,0"
+                                        Click="AddToPlaylistButton_Click"
+                                        Content="➕ افزودن به پلی لیست"
+                                        Style="{StaticResource ModernButtonStyle}" />
+                                </StackPanel>
+                            </ScrollViewer>
+                        </Border>
+                    </TabItem>
+
+                    <!--  Tab 2: Playlist  -->
+                    <TabItem Header="📋 پلی لیست‌">
+                        <Border
+                            Margin="20"
+                            Padding="20"
+                            Background="#252525"
+                            CornerRadius="12">
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="*" />
+                                </Grid.RowDefinitions>
+
+                                <!--  Playlist Header  -->
+                                <Grid Grid.Row="0" Margin="0,0,0,15">
+                                    <TextBlock
+                                        VerticalAlignment="Center"
+                                        FontSize="16"
+                                        FontWeight="SemiBold"
+                                        Foreground="#ffffff"
+                                        Text="پلی لیست‌های من" />
+                                    <Button
+                                        HorizontalAlignment="Left"
+                                        Click="CreatePlaylistButton_Click"
+                                        Content="+ پلی لیست جدید"
+                                        Style="{StaticResource PrimaryButtonStyle}" />
+                                </Grid>
+
+                                <!--  Playlists List  -->
+                                <Border
+                                    Grid.Row="1"
+                                    Background="#3f3f3f"
+                                    CornerRadius="10">
+                                    <ListBox
+                                        x:Name="PlaylistsListBox"
+                                        Background="Transparent"
+                                        ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                                        ScrollViewer.VerticalScrollBarVisibility="Auto"
+                                        SelectionChanged="PlaylistsListBox_SelectionChanged">
+                                        <ListBox.Resources>
+                                            <Style BasedOn="{StaticResource VScrollBarStyle}" TargetType="ScrollBar" />
+                                        </ListBox.Resources>
+                                        <ListBox.ItemTemplate>
+                                            <DataTemplate>
+                                                <Grid>
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="Auto" />
+                                                        <ColumnDefinition Width="Auto" />
+                                                    </Grid.ColumnDefinitions>
+
+                                                    <StackPanel
+                                                        Grid.Column="0"
+                                                        Margin="40,0"
+                                                        VerticalAlignment="Center"
+                                                        Orientation="Vertical">
+                                                        <Button
+                                                            Width="80"
+                                                            Margin="0,5"
+                                                            Click="ViewPlaylistButton_Click"
+                                                            Content="مشاهده"
+                                                            Style="{StaticResource PrimaryButtonStyle}"
+                                                            Tag="{Binding}" />
+                                                        <Button
+                                                            Width="80"
+                                                            Margin="0,5"
+                                                            Click="DeletePlaylistButton_Click"
+                                                            Content="حذف"
+                                                            Style="{StaticResource ModernButtonStyle}"
+                                                            Tag="{Binding}" />
+                                                    </StackPanel>
+
+                                                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                                        <TextBlock
+                                                            FontSize="14"
+                                                            FontWeight="SemiBold"
+                                                            Foreground="#ffffff">
+                                                            <Run Text="عنوان: " />
+                                                            <Run Text="{Binding Name}" />
+                                                        </TextBlock>
+                                                        <TextBlock
+                                                            Margin="0,5,0,0"
+                                                            FontSize="11"
+                                                            Foreground="#888888">
+                                                            <Run Text="{Binding VideoCount, Mode=OneWay}" />
+                                                            <Run Text="ویدیو •" />
+                                                            <Run Text="{Binding DisplayDateShamsi, Mode=OneWay}" />
+                                                        </TextBlock>
+                                                    </StackPanel>
+                                                </Grid>
+                                            </DataTemplate>
+                                        </ListBox.ItemTemplate>
+                                    </ListBox>
+                                </Border>
+                            </Grid>
+                        </Border>
+                    </TabItem>
+
+                    <!--  Tab 3: History  -->
+                    <TabItem Header="🕐 تاریخچه">
+                        <Border
+                            Margin="20"
+                            Padding="20"
+                            Background="#252525"
+                            CornerRadius="12">
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="*" />
+                                </Grid.RowDefinitions>
+
+                                <!--  History Header  -->
+                                <Grid Grid.Row="0" Margin="0,0,0,15">
+                                    <TextBlock
+                                        VerticalAlignment="Center"
+                                        FontSize="16"
+                                        FontWeight="SemiBold"
+                                        Foreground="#ffffff"
+                                        Text="تاریخچه پخش" />
+                                    <Button
+                                        HorizontalAlignment="Left"
+                                        Click="ClearHistoryButton_Click"
+                                        Content="پاک کردن تاریخچه"
+                                        Style="{StaticResource ModernButtonStyle}" />
+                                </Grid>
+
+                                <!--  History List  -->
+                                <Border
+                                    Grid.Row="1"
+                                    Background="#3f3f3f"
+                                    CornerRadius="10">
+                                    <ListBox
+                                        x:Name="HistoryListBox"
+                                        Background="Transparent"
+                                        ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                                        ScrollViewer.VerticalScrollBarVisibility="Auto">
+                                        <ListBox.Resources>
+                                            <Style BasedOn="{StaticResource VScrollBarStyle}" TargetType="ScrollBar" />
+                                        </ListBox.Resources>
+                                        <ListBox.ItemTemplate>
+                                            <DataTemplate>
+                                                <Grid>
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="Auto" />
+                                                        <ColumnDefinition Width="Auto" />
+                                                    </Grid.ColumnDefinitions>
+
+                                                    <StackPanel
+                                                        Grid.Column="0"
+                                                        Margin="40,0"
+                                                        VerticalAlignment="Center"
+                                                        Orientation="Vertical">
+                                                        <Button
+                                                            Width="80"
+                                                            Margin="0,5"
+                                                            Click="PlayFromHistoryButton_Click"
+                                                            Content="پخش"
+                                                            Style="{StaticResource PrimaryButtonStyle}"
+                                                            Tag="{Binding}" />
+                                                        <Button
+                                                            Width="80"
+                                                            Margin="0,5"
+                                                            Click="RemoveFromHistoryButton_Click"
+                                                            Content="حذف"
+                                                            Style="{StaticResource ModernButtonStyle}"
+                                                            Tag="{Binding}" />
+                                                    </StackPanel>
+
+                                                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                                        <TextBlock
+                                                            FontSize="14"
+                                                            FontWeight="SemiBold"
+                                                            Foreground="#ffffff">
+                                                            <Run Text="عنوان: " />
+                                                            <Run Text="{Binding Title}" />
+                                                        </TextBlock>
+
+                                                        <TextBlock
+                                                            Margin="0,5,0,5"
+                                                            FontSize="11"
+                                                            Foreground="#888888"
+                                                            TextTrimming="CharacterEllipsis">
+                                                            <Run Text="آخرین بازدید: " />
+                                                            <Run Text="{Binding DisplayLastPlayedShamsi, Mode=OneWay}" />
+                                                        </TextBlock>
+
+
+                                                        <Button
+                                                            Padding="5"
+                                                            Background="Transparent"
+                                                            FontSize="11"
+                                                            Foreground="#888888"
+                                                            Tag="{Binding VideoUrl}"
+                                                            ToolTip="{Binding VideoUrl}">
+                                                            <TextBlock
+                                                                Margin="0"
+                                                                VerticalAlignment="Center"
+                                                                FontSize="11"
+                                                                Foreground="#888888"
+                                                                Text="برای مشاهده لینک، نگه دار"
+                                                                TextTrimming="CharacterEllipsis" />
+                                                        </Button>
+
+
+                                                    </StackPanel>
+
+
+                                                </Grid>
+                                            </DataTemplate>
+                                        </ListBox.ItemTemplate>
+                                    </ListBox>
+                                </Border>
+                            </Grid>
+                        </Border>
+                    </TabItem>
+                </TabControl>
+
+                <!--  Download Panel (Bottom)  -->
+                <Border
+                    x:Name="DownloadPanel"
+                    Grid.Row="2"
+                    Padding="20,15"
+                    Background="#252525"
+                    BorderBrush="#303030"
+                    BorderThickness="0,1,0,0"
+                    CornerRadius="0,0,10,10"
+                    Visibility="Collapsed">
                     <Grid>
                         <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="Auto" />
                             <ColumnDefinition Width="*" />
                             <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
 
-                        <TextBlock
-                            Grid.Column="0"
-                            VerticalAlignment="Center"
-                            FontSize="13"
-                            FontWeight="SemiBold"
-                            Foreground="#ffffff"
-                            Text="در حال دانلود: " />
-                        <TextBlock
-                            x:Name="DownloadFileNameText"
+                        <StackPanel Grid.Column="0">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+
+                                <TextBlock
+                                    Grid.Column="0"
+                                    VerticalAlignment="Center"
+                                    FontSize="13"
+                                    FontWeight="SemiBold"
+                                    Foreground="#ffffff"
+                                    Text="در حال دانلود: " />
+                                <TextBlock
+                                    x:Name="DownloadFileNameText"
+                                    Grid.Column="1"
+                                    Margin="5,0"
+                                    VerticalAlignment="Center"
+                                    FontSize="12"
+                                    Foreground="#cccccc"
+                                    Text="video.mp4"
+                                    TextTrimming="CharacterEllipsis" />
+                                <TextBlock
+                                    x:Name="DownloadProgressText"
+                                    Grid.Column="2"
+                                    Margin="10,0,0,0"
+                                    VerticalAlignment="Center"
+                                    FontSize="12"
+                                    Foreground="#ff1313"
+                                    Text="0%" />
+                            </Grid>
+
+                            <ProgressBar
+                                x:Name="DownloadProgressBar"
+                                Height="6"
+                                Margin="0,8,0,0"
+                                Background="#2a2a2a"
+                                BorderThickness="0"
+                                Foreground="#ff1313"
+                                Maximum="100"
+                                Value="0" />
+
+                            <Grid Margin="0,5,0,0">
+                                <TextBlock
+                                    x:Name="DownloadSpeedText"
+                                    HorizontalAlignment="Right"
+                                    FontSize="11"
+                                    Foreground="#888888"
+                                    Text="0 KB/s" />
+                                <TextBlock
+                                    x:Name="DownloadSizeText"
+                                    HorizontalAlignment="Left"
+                                    FontSize="11"
+                                    Foreground="#888888"
+                                    Text="0 MB / 0 MB" />
+                            </Grid>
+                        </StackPanel>
+
+                        <Button
                             Grid.Column="1"
-                            Margin="5,0"
-                            VerticalAlignment="Center"
-                            FontSize="12"
-                            Foreground="#cccccc"
-                            Text="video.mp4"
-                            TextTrimming="CharacterEllipsis" />
-                        <TextBlock
-                            x:Name="DownloadProgressText"
-                            Grid.Column="2"
-                            Margin="10,0,0,0"
-                            VerticalAlignment="Center"
-                            FontSize="12"
-                            Foreground="#ff1313"
-                            Text="0%" />
+                            Width="100"
+                            Margin="20,0,0,0"
+                            Click="CancelDownloadButton_Click"
+                            Content="لغو"
+                            Style="{StaticResource ModernButtonStyle}" />
                     </Grid>
-
-                    <ProgressBar
-                        x:Name="DownloadProgressBar"
-                        Height="6"
-                        Margin="0,8,0,0"
-                        Background="#2a2a2a"
-                        BorderThickness="0"
-                        Foreground="#ff1313"
-                        Maximum="100"
-                        Value="0" />
-
-                    <Grid Margin="0,5,0,0">
-                        <TextBlock
-                            x:Name="DownloadSpeedText"
-                            HorizontalAlignment="Right"
-                            FontSize="11"
-                            Foreground="#888888"
-                            Text="0 KB/s" />
-                        <TextBlock
-                            x:Name="DownloadSizeText"
-                            HorizontalAlignment="Left"
-                            FontSize="11"
-                            Foreground="#888888"
-                            Text="0 MB / 0 MB" />
-                    </Grid>
-                </StackPanel>
-
-                <Button
-                    Grid.Column="1"
-                    Width="100"
-                    Margin="20,0,0,0"
-                    Click="CancelDownloadButton_Click"
-                    Content="لغو"
-                    Style="{StaticResource ModernButtonStyle}" />
+                </Border>
             </Grid>
         </Border>
-    </Grid>
+    </DockPanel>
 </Window>

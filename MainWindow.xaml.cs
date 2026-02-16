@@ -1,10 +1,12 @@
 ﻿using System.IO;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
 using EasyPlay.Helpers;
 using EasyPlay.Models;
 using EasyPlay.Services;
 using EasyPlay.Views;
+using Microsoft.Win32;
 
 namespace EasyPlay
 {
@@ -42,6 +44,119 @@ namespace EasyPlay
             HistoryListBox.ItemsSource = _historyService.GetHistory();
         }
 
+        #region Custom Title Bar
+
+        // Default Size
+        private double _defaultWidth = 900;
+        private double _defaultHeight = 900;
+
+        // Drag
+        private void TitleBar_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            if (e.ClickCount == 2)
+            {
+                ToggleMaximize();
+            }
+            else
+            {
+                if (this.WindowState == WindowState.Maximized)
+                {
+                    var mousePosition = PointToScreen(e.GetPosition(this));
+
+                    var percentHorizontal = e.GetPosition(this).X / this.ActualWidth;
+
+                    this.WindowState = WindowState.Normal;
+
+                    this.Left = mousePosition.X - (this.Width * percentHorizontal);
+                    this.Top = mousePosition.Y - e.GetPosition(this).Y;
+
+                    this.Left = Math.Max(0, Math.Min(this.Left,
+                        SystemParameters.VirtualScreenWidth - this.Width));
+                    this.Top = Math.Max(0, Math.Min(this.Top,
+                        SystemParameters.VirtualScreenHeight - this.Height));
+                }
+
+                try
+                {
+                    this.DragMove();
+                }
+                catch
+                {
+                    // Ignore
+                }
+            }
+        }
+
+        // Minimize
+        private void MinimizeButton_Click(object sender, RoutedEventArgs e)
+        {
+            this.WindowState = WindowState.Minimized;
+        }
+
+        // Maximize/Restore
+        private void MaximizeButton_Click(object sender, RoutedEventArgs e)
+        {
+            ToggleMaximize();
+        }
+
+        // Toggle Maximize
+        private void ToggleMaximize()
+        {
+            if (this.WindowState == WindowState.Maximized)
+            {
+                this.WindowState = WindowState.Normal;
+            }
+            else
+            {
+                this.WindowState = WindowState.Maximized;
+            }
+            UpdateMaximizeIcon(this.WindowState == WindowState.Maximized);
+        }
+
+        // Back Default
+        private void RestoreDefaultButton_Click(object sender, RoutedEventArgs e)
+        {
+            this.WindowState = WindowState.Normal;
+            this.Width = _defaultWidth;
+            this.Height = _defaultHeight;
+
+            // Center
+            this.Left = (SystemParameters.PrimaryScreenWidth - this.Width) / 2;
+            this.Top = (SystemParameters.PrimaryScreenHeight - this.Height) / 2;
+
+            UpdateMaximizeIcon(false);
+        }
+
+        // Close
+        private void CloseButton_Click(object sender, RoutedEventArgs e)
+        {
+            var result = CustomMessageBox.ShowQuestion("آیا مطمئن هستید که می خواهید خارج شوید؟",
+                "خروج از برنامه");
+
+            if (result == CustomMessageBox.MessageResult.Yes)
+            {
+                Application.Current.Shutdown();
+            }
+        }
+
+        // Update Icon Maximize
+        private void UpdateMaximizeIcon(bool isMaximized)
+        {
+            if (MaximizeIcon != null)
+            {
+                MaximizeIcon.Text = isMaximized ? "\uf2d2" : "\uf2d0";
+            }
+        }
+
+        // State
+        protected override void OnStateChanged(EventArgs e)
+        {
+            base.OnStateChanged(e);
+            UpdateMaximizeIcon(this.WindowState == WindowState.Maximized);
+        }
+
+        #endregion
+
         #region Play Tab Events
 
         private void DownloadVideoCheckBox_Changed(object sender, RoutedEventArgs e)
@@ -60,22 +175,14 @@ namespace EasyPlay
 
         private void BrowseSavePath_Click(object sender, RoutedEventArgs e)
         {
-            var dialog = new Microsoft.Win32.SaveFileDialog
+            var dialog = new OpenFolderDialog
             {
-                Title = "انتخاب پوشه ذخیره",
-                FileName = "انتخاب این پوشه",
-                Filter = "فولدر|*.folder",
-                CheckFileExists = false,
-                CheckPathExists = true
+                Title = "انتخاب پوشه ذخیره"
             };
 
             if (dialog.ShowDialog() == true)
             {
-                var path = System.IO.Path.GetDirectoryName(dialog.FileName);
-                if (!string.IsNullOrEmpty(path))
-                {
-                    SavePathTextBox.Text = path;
-                }
+                SavePathTextBox.Text = dialog.FolderName;
             }
         }
 
@@ -87,7 +194,7 @@ namespace EasyPlay
 
             if (string.IsNullOrEmpty(videoUrl))
             {
-                MessageBox.Show("لطفاً لینک ویدیو را وارد کنید.", "خطا", MessageBoxButton.OK, MessageBoxImage.Warning);
+                CustomMessageBox.ShowError("لطفاً لینک ویدیو را وارد کنید.", "خطا");
                 return;
             }
 
@@ -99,13 +206,13 @@ namespace EasyPlay
             // Validate URLs
             if (!Uri.TryCreate(videoUrl, UriKind.Absolute, out _))
             {
-                MessageBox.Show("لینک ویدیو معتبر نیست.", "خطا", MessageBoxButton.OK, MessageBoxImage.Warning);
+                CustomMessageBox.ShowError("لینک ویدیو معتبر نیست.", "خطا");
                 return;
             }
 
             if (!string.IsNullOrEmpty(subtitleUrl) && !Uri.TryCreate(subtitleUrl, UriKind.Absolute, out _))
             {
-                MessageBox.Show("لینک زیرنویس معتبر نیست.", "خطا", MessageBoxButton.OK, MessageBoxImage.Warning);
+                CustomMessageBox.ShowError("لینک زیرنویس معتبر نیست.", "خطا");
                 return;
             }
 
@@ -127,7 +234,7 @@ namespace EasyPlay
                 var savePath = SavePathTextBox.Text.Trim();
                 if (string.IsNullOrEmpty(savePath))
                 {
-                    MessageBox.Show("لطفاً مسیر ذخیره را انتخاب کنید.", "خطا", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    CustomMessageBox.ShowWarning("لطفاً مسیر ذخیره را انتخاب کنید.", "خطا");
                     return;
                 }
 
@@ -151,7 +258,7 @@ namespace EasyPlay
 
             if (string.IsNullOrEmpty(videoUrl))
             {
-                MessageBox.Show("لطفاً لینک ویدیو را وارد کنید.", "خطا", MessageBoxButton.OK, MessageBoxImage.Warning);
+                CustomMessageBox.ShowWarning("لطفاً لینک ویدیو را وارد کنید.", "خطا");
                 return;
             }
 
@@ -164,19 +271,17 @@ namespace EasyPlay
             var playlists = _playlistService.GetPlaylists();
             if (playlists.Count == 0)
             {
-                var result = MessageBox.Show(
-                    "هیچ پلی‌لیستی وجود ندارد. آیا می‌خواهید یک پلی‌لیست جدید ایجاد کنید؟",
-                    "پلی‌لیست",
-                    MessageBoxButton.YesNo,
-                    MessageBoxImage.Question
-                );
+                var result = CustomMessageBox.ShowQuestion(
+                    "هیچ پلی لیستی وجود ندارد. آیا می خواهید یک پلی لیست جدید ایجاد کنید؟",
+                    "پلی لیست");
 
-                if (result == MessageBoxResult.Yes)
+
+                if (result == CustomMessageBox.MessageResult.Yes)
                 {
-                    var playlistName = Microsoft.VisualBasic.Interaction.InputBox(
-                        "نام پلی‌لیست جدید:",
-                        "ایجاد پلی‌لیست",
-                        "پلی‌لیست من"
+                    var playlistName = CustomInputBox.Show(
+                        "نام پلی لیست جدید:",
+                        "ایجاد پلی لیست",
+                        "پلی لیست من"
                     );
 
                     if (!string.IsNullOrEmpty(playlistName))
@@ -209,7 +314,7 @@ namespace EasyPlay
             _playlistService.AddVideoToPlaylist(playlist, videoItem);
             PlaylistsListBox.ItemsSource = _playlistService.GetPlaylists();
 
-            MessageBox.Show($"ویدیو به پلی‌لیست '{playlist.Name}' اضافه شد.", "موفق", MessageBoxButton.OK, MessageBoxImage.Information);
+            CustomMessageBox.ShowSuccess($"ویدیو به پلی لیست '{playlist.Name}' اضافه شد.", "موفق");
         }
 
         #endregion
@@ -218,17 +323,17 @@ namespace EasyPlay
 
         private void CreatePlaylistButton_Click(object sender, RoutedEventArgs e)
         {
-            var playlistName = Microsoft.VisualBasic.Interaction.InputBox(
-                "نام پلی‌لیست جدید:",
-                "ایجاد پلی‌لیست",
-                "پلی‌لیست من"
-            );
+            var playlistName = CustomInputBox.Show(
+                        "نام پلی لیست جدید:",
+                        "ایجاد پلی لیست",
+                        "پلی لیست من"
+                    );
 
             if (!string.IsNullOrEmpty(playlistName))
             {
                 _playlistService.CreatePlaylist(playlistName);
                 PlaylistsListBox.ItemsSource = _playlistService.GetPlaylists();
-                MessageBox.Show("پلی‌لیست جدید ایجاد شد.", "موفق", MessageBoxButton.OK, MessageBoxImage.Information);
+                CustomMessageBox.ShowSuccess("پلی لیست جدید ایجاد شد.", "موفق");
             }
         }
 
@@ -248,14 +353,11 @@ namespace EasyPlay
         {
             if (sender is Button button && button.Tag is PlaylistItem playlist)
             {
-                var result = MessageBox.Show(
-                    $"آیا مطمئن هستید که می‌خواهید پلی‌لیست '{playlist.Name}' را حذف کنید؟",
-                    "تأیید حذف",
-                    MessageBoxButton.YesNo,
-                    MessageBoxImage.Question
-                );
+                var result = CustomMessageBox.ShowQuestion(
+                    $"آیا مطمئن هستید که می خواهید پلی لیست '{playlist.Name}' را حذف کنید؟",
+                    "تأیید حذف");
 
-                if (result == MessageBoxResult.Yes)
+                if (result == CustomMessageBox.MessageResult.Yes)
                 {
                     _playlistService.DeletePlaylist(playlist);
                     PlaylistsListBox.ItemsSource = _playlistService.GetPlaylists();
@@ -297,7 +399,7 @@ namespace EasyPlay
 
         private void ClearHistoryButton_Click(object sender, RoutedEventArgs e)
         {
-            var result = CustomMessageBox.ShowQuestion("آیا مطمئن هستید که می‌خواهید تمام تاریخچه را پاک کنید؟", "تأیید پاک کردن");
+            var result = CustomMessageBox.ShowQuestion("آیا مطمئن هستید که می خواهید تمام تاریخچه را پاک کنید؟", "تأیید پاک کردن");
 
             if (result == CustomMessageBox.MessageResult.Yes)
             {
@@ -361,12 +463,9 @@ namespace EasyPlay
 
                 if (success)
                 {
-                    MessageBox.Show(
+                    CustomMessageBox.ShowSuccess(
                         $"دانلود با موفقیت تکمیل شد:\n{videoFilePath}",
-                        "دانلود تکمیل شد",
-                        MessageBoxButton.OK,
-                        MessageBoxImage.Information
-                    );
+                        "دانلود تکمیل شد");
 
                     // Download subtitle if exists
                     if (!string.IsNullOrEmpty(subtitleUrl))
@@ -381,7 +480,7 @@ namespace EasyPlay
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"خطا در دانلود: {ex.Message}", "خطا", MessageBoxButton.OK, MessageBoxImage.Error);
+                CustomMessageBox.ShowError($"خطا در دانلود: {ex.Message}", "خطا");
                 DownloadPanel.Visibility = Visibility.Collapsed;
             }
         }

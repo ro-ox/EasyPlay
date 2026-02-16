@@ -1,4 +1,5 @@
 ﻿using System.Collections.ObjectModel;
+using System.Globalization;
 
 namespace EasyPlay.Models
 {
@@ -10,7 +11,29 @@ namespace EasyPlay.Models
         public DateTime CreatedDate { get; set; } = DateTime.Now;
         public DateTime? LastModifiedDate { get; set; }
 
-        public string DisplayDate => CreatedDate.ToString("yyyy/MM/dd");
+        public string DisplayDate => CreatedDate.ToString("yyyy/MM/dd") ?? "";
+
+        public string DisplayDateShamsi
+        {
+            get
+            {
+                if (string.IsNullOrWhiteSpace(DisplayDate))
+                    return "";
+
+                if (!DateTime.TryParse(DisplayDate, out var date))
+                    return DisplayDate!;
+
+                var pc = new PersianCalendar();
+
+                return string.Format(
+                    "{0}/{1:00}/{2:00}",
+                    pc.GetYear(date),
+                    pc.GetMonth(date),
+                    pc.GetDayOfMonth(date)
+                );
+            }
+        }
+
         public int VideoCount => Videos.Count;
     }
 }

@@ -84,5 +84,27 @@
                 </Setter.Value>
             </Setter>
         </Style>
+
+        <Style TargetType="ToolTip">
+            <Setter Property="Background" Value="#2D2D2D" />
+            <Setter Property="Foreground" Value="#FFFFFF" />
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="FlowDirection" Value="LeftToRight" />
+            <Setter Property="FontFamily" Value="Tahoma" />
+            <Setter Property="BorderBrush" Value="#ff0000" />
+            <Setter Property="BorderThickness" Value="2" />
+            <Setter Property="Padding" Value="10" />
+            <Setter Property="HasDropShadow" Value="True" />
+            <Setter Property="ContentTemplate">
+                <Setter.Value>
+                    <DataTemplate>
+                        <TextBlock
+                            MaxWidth="800"
+                            Text="{Binding}"
+                            TextWrapping="Wrap" />
+                    </DataTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
     </Application.Resources>
 </Application>
