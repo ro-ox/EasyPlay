@@ -13,9 +13,18 @@ using ColorConverter = System.Windows.Media.ColorConverter;
 using System.Windows.Media.Animation;
 using EasyPlay.Helpers;
 using LibVLCSharp.WPF;
+using System.Diagnostics;
 
 namespace EasyPlay.Views
 {
+    public enum VideoRenderer
+    {
+        Auto,
+        DirectX,
+        DirectDraw,
+        Software
+    }
+
     public partial class VideoPlayerWindow : Window
     {
         private LibVLC? _libVLC;
@@ -39,8 +48,13 @@ namespace EasyPlay.Views
         private bool _isReinitializing;
         private readonly float[] _speedOptions = { 0.25f, 0.5f, 0.75f, 1f, 1.25f, 1.5f, 2f };
         private int _currentSpeedIndex = 3; // 1x
-
         private bool _isClosing = false;
+        private VideoRenderer _videoRenderer = VideoRenderer.Auto;
+        private bool _isNetworkError = false;
+        private int _retryCount = 0;
+        private const int MAX_RETRIES = 5;
+        private long _lastKnownTime = 0;
+        private DispatcherTimer? _retryTimer;
 
         public VideoPlayerWindow(string videoUrl, string title = "پخش ویدیو")
             : this(videoUrl, title, null) { }
@@ -51,8 +65,16 @@ namespace EasyPlay.Views
             Title = title;
             _videoUrl = videoUrl;
             _subtitleUrl = subtitleUrl;
-            InitializePlayer(videoUrl);
+            LoadingOverlay.Visibility = Visibility.Visible;
             SetupHideControlsTimer();
+            //Loaded += async (s, e) => await InitializePlayerAsync(videoUrl);
+            this.Loaded += Window_Loaded;
+        }
+
+        private async void Window_Loaded(object sender, RoutedEventArgs e)
+        {
+            await Task.Delay(100);
+            await InitializePlayerAsync(_videoUrl!);
         }
 
         #region Custom Title Bar
@@ -171,8 +193,8 @@ namespace EasyPlay.Views
 
                 var uriFormats = new[]
                 {
-                    "pack://application:,,,/Assets/Fonts/IRANSans.ttf",
-                    "pack://application:,,,/EasyPlay;component/Assets/Fonts/IRANSans.ttf"
+                    "pack://application:,,,/Assets/Fonts/Vazirmatn.ttf",
+                    "pack://application:,,,/EasyPlay;component/Assets/Fonts/Vazirmatn.ttf"
                 };
 
                 foreach (var uriString in uriFormats)
@@ -224,46 +246,76 @@ namespace EasyPlay.Views
                 $"--freetype-color={ColorToVlcInt(_subtitleColor)}"
             };
 
+            // Video Renderer
+            switch (_videoRenderer)
+            {
+                case VideoRenderer.DirectX:
+                    options.Add("--vout=direct3d9");
+                    options.Add("--avcodec-hw=d3d11va");  // Hardware decode
+                    break;
+
+                case VideoRenderer.DirectDraw:
+                    options.Add("--vout=directdraw");
+                    options.Add("--avcodec-hw=dxva2");  // Hardware decode
+                    break;
+
+                case VideoRenderer.Software:
+                    options.Add("--avcodec-hw=none");      // Software decode
+                    options.Add("--vout=win32");           // Software render
+                    options.Add("--no-directx-hw-yuv");    // Disable GPU YUV
+                    break;
+            }
+
             _fontTempPath = ExtractFontToTemp();
             options.Add(!string.IsNullOrEmpty(_fontTempPath) && File.Exists(_fontTempPath)
-                ? "--freetype-font=IRANSans"
+                ? "--freetype-font=Vazirmatn"
                 : "--freetype-font=Tahoma");
 
             return options;
         }
 
-        private async void InitializePlayer(string videoUrl)
+        private async Task InitializePlayerAsync(string videoUrl)
         {
             try
             {
-                Core.Initialize();
-                _libVLC = new LibVLC(BuildVlcOptions().ToArray());
-                _mediaPlayer = new MediaPlayer(_libVLC);
-                _mediaPlayer.EnableMouseInput = false;
-                _mediaPlayer.EnableKeyInput = false;
-                _mediaPlayer.Volume = 100;
-                VideoView.MediaPlayer = _mediaPlayer;
+                await Task.Run(() =>
+                {
+                    Core.Initialize();
 
-                _mediaPlayer.Playing += MediaPlayer_Playing;
-                _mediaPlayer.Paused += MediaPlayer_Paused;
-                _mediaPlayer.Stopped += MediaPlayer_Stopped;
-                _mediaPlayer.EndReached += MediaPlayer_EndReached;
-                _mediaPlayer.EncounteredError += MediaPlayer_EncounteredError;
-                _mediaPlayer.LengthChanged += MediaPlayer_LengthChanged;
+                    Dispatcher.Invoke(() =>
+                    {
+                        _libVLC = new LibVLC(BuildVlcOptions().ToArray());
+                        _mediaPlayer = new MediaPlayer(_libVLC);
+                        _mediaPlayer.EnableMouseInput = false;
+                        _mediaPlayer.EnableKeyInput = false;
+                        _mediaPlayer.Volume = 100;
+                        VideoView.MediaPlayer = _mediaPlayer;
 
-                _timer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(250) };
-                _timer.Tick += Timer_Tick;
+                        _mediaPlayer.Playing += MediaPlayer_Playing;
+                        _mediaPlayer.Paused += MediaPlayer_Paused;
+                        _mediaPlayer.Stopped += MediaPlayer_Stopped;
+                        _mediaPlayer.EndReached += MediaPlayer_EndReached;
+                        _mediaPlayer.EncounteredError += MediaPlayer_EncounteredError;
+                        _mediaPlayer.LengthChanged += MediaPlayer_LengthChanged;
 
-                _media = new Media(_libVLC, new Uri(videoUrl));
-                _mediaPlayer.Play(_media);
-                _timer.Start();
+                        _timer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(250) };
+                        _timer.Tick += Timer_Tick;
+
+                        _media = new Media(_libVLC, new Uri(videoUrl));
+                        _mediaPlayer.Play(_media);
+                        _timer.Start();
+                    });
+                });
 
                 if (!string.IsNullOrEmpty(_subtitleUrl))
                     await LoadSubtitleAsync(_subtitleUrl);
+
+                LoadingOverlay.Visibility = Visibility.Collapsed;
             }
             catch (Exception ex)
             {
-                CustomMessageBox.ShowError($"خطا در بارگذاری ویدیو: {ex.Message}", "خطا");
+                CustomMessageBox.ShowError($"خطا در بارگذاری ویدیو", "خطا");
+                Debug.WriteLine($"Error Loading Video: {ex}");
                 Close();
             }
         }
@@ -356,26 +408,23 @@ namespace EasyPlay.Views
                     });
                 });
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                //AppLogger.Debug($"Error loading subtitle: {ex.Message}");
+                Debug.WriteLine($"Error loading subtitle: {ex.Message}");
             }
         }
 
         private void ShowSeekOverlay(long deltaMs)
         {
             _seekOverlayTimer.Stop();
-            SeekOverlay.BeginAnimation(UIElement.OpacityProperty, null);
 
             var seconds = Math.Abs(deltaMs) / 1000;
             var sign = deltaMs > 0 ? "⏩ " : "⏪ ";
 
             SeekOverlayText.Text = $"{sign}{seconds} ثانیه";
+            SeekOverlayPopup.IsOpen = true;
 
-            SeekOverlay.Opacity = 1;
-            SeekOverlay.Visibility = Visibility.Visible;
-
-            _seekOverlayTimer.Interval = TimeSpan.FromMilliseconds(1000);
+            _seekOverlayTimer.Interval = TimeSpan.FromSeconds(1.5);
             _seekOverlayTimer.Tick -= SeekOverlayTimer_Tick;
             _seekOverlayTimer.Tick += SeekOverlayTimer_Tick;
             _seekOverlayTimer.Start();
@@ -384,28 +433,28 @@ namespace EasyPlay.Views
         private void SeekOverlayTimer_Tick(object? sender, EventArgs e)
         {
             _seekOverlayTimer.Stop();
-            FadeOutSeekOverlay();
+            SeekOverlayPopup.IsOpen = false;
         }
 
 
-        private void FadeOutSeekOverlay()
-        {
-            var anim = new DoubleAnimation
-            {
-                From = 1,
-                To = 0,
-                Duration = TimeSpan.FromMilliseconds(250),
-                FillBehavior = FillBehavior.Stop
-            };
+        //private void FadeOutSeekOverlay()
+        //{
+        //    var anim = new DoubleAnimation
+        //    {
+        //        From = 1,
+        //        To = 0,
+        //        Duration = TimeSpan.FromMilliseconds(250),
+        //        FillBehavior = FillBehavior.Stop
+        //    };
 
-            anim.Completed += (_, __) =>
-            {
-                SeekOverlay.Visibility = Visibility.Collapsed;
-                SeekOverlay.Opacity = 1;
-            };
+        //    anim.Completed += (_, __) =>
+        //    {
+        //        SeekOverlay.Visibility = Visibility.Collapsed;
+        //        SeekOverlay.Opacity = 1;
+        //    };
 
-            SeekOverlay.BeginAnimation(UIElement.OpacityProperty, anim);
-        }
+        //    SeekOverlay.BeginAnimation(UIElement.OpacityProperty, anim);
+        //}
 
 
 
@@ -420,7 +469,16 @@ namespace EasyPlay.Views
                 {
                     tb.Text = "\uf04c"; // Pause
                 }
+
                 LoadingOverlay.Visibility = Visibility.Collapsed;
+
+                if (_isNetworkError)
+                {
+                    _retryCount = 0;
+                    _isNetworkError = false;
+                    LoadingText.Text = "در حال بارگذاری...";
+                }
+
                 ResetHideControlsTimer();
             });
         }
@@ -470,9 +528,80 @@ namespace EasyPlay.Views
         {
             Dispatcher.Invoke(() =>
             {
-                LoadingOverlay.Visibility = Visibility.Collapsed;
-                CustomMessageBox.ShowError("خطا در پخش ویدیو", "خطا");
+                _lastKnownTime = _mediaPlayer?.Time ?? 0;
+
+                if (_retryCount < MAX_RETRIES)
+                {
+                    _isNetworkError = true;
+                    LoadingOverlay.Visibility = Visibility.Visible;
+                    LoadingText.Text = $"در حال تلاش مجدد... ({_retryCount + 1}/{MAX_RETRIES})";
+
+                    _retryTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(3) };
+                    _retryTimer.Tick += RetryConnection;
+                    _retryTimer.Start();
+
+                    _retryCount++;
+                }
+                else
+                {
+                    LoadingOverlay.Visibility = Visibility.Collapsed;
+                    _retryCount = 0;
+                    _isNetworkError = false;
+
+                    var result = CustomMessageBox.ShowQuestion(
+                        "خطا در پخش ویدیو\n\nآیا می‌خواهید دوباره تلاش کنید؟",
+                        "خطا در پخش");
+
+                    if (result == CustomMessageBox.MessageResult.Yes)
+                    {
+                        RetryConnection(null, null);
+                    }
+                }
             });
+        }
+
+        private void RetryConnection(object? sender, EventArgs? e)
+        {
+            _retryTimer?.Stop();
+
+            try
+            {
+                LoadingText.Text = "در حال اتصال مجدد...";
+
+                var savedTime = _lastKnownTime;
+
+                _mediaPlayer?.Stop();
+                _media?.Dispose();
+
+                _media = new Media(_libVLC!, new Uri(_videoUrl!));
+                _mediaPlayer?.Play(_media);
+
+                Task.Delay(2000).ContinueWith(_ =>
+                {
+                    Dispatcher.Invoke(() =>
+                    {
+                        if (_mediaPlayer != null && savedTime > 0)
+                        {
+                            _mediaPlayer.Time = savedTime;
+                        }
+
+                        _retryCount = 0;
+                        _isNetworkError = false;
+                    });
+                });
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Retry failed: {ex.Message}");
+
+                if (_retryCount < MAX_RETRIES)
+                {
+                    _retryTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(3) };
+                    _retryTimer.Tick += RetryConnection;
+                    _retryTimer.Start();
+                    _retryCount++;
+                }
+            }
         }
 
         private void MediaPlayer_LengthChanged(object? sender, MediaPlayerLengthChangedEventArgs e)
@@ -643,12 +772,20 @@ namespace EasyPlay.Views
 
         private void ShowVolumeOverlay(int volume)
         {
-            SeekOverlayText.Text = $"🔊 صدا: {volume}%";
-            SeekOverlay.Visibility = Visibility.Visible;
-            SeekOverlay.Opacity = 1;
-
             _volumeOverlayTimer.Stop();
-            _volumeOverlayTimer.Interval = TimeSpan.FromMilliseconds(700);
+
+            VolumeOverlayText.Text = $"{volume}%";
+
+            if (volume == 0)
+                VolumeIcon.Text = "\uf026";
+            else if (volume < 50)
+                VolumeIcon.Text = "\uf027";
+            else
+                VolumeIcon.Text = "\uf028";
+
+            VolumeOverlayPopup.IsOpen = true;
+
+            _volumeOverlayTimer.Interval = TimeSpan.FromSeconds(1.5);
             _volumeOverlayTimer.Tick -= VolumeOverlayTimer_Tick;
             _volumeOverlayTimer.Tick += VolumeOverlayTimer_Tick;
             _volumeOverlayTimer.Start();
@@ -657,7 +794,7 @@ namespace EasyPlay.Views
         private void VolumeOverlayTimer_Tick(object? sender, EventArgs e)
         {
             _volumeOverlayTimer.Stop();
-            FadeOutSeekOverlay();
+            VolumeOverlayPopup.IsOpen = false;
         }
 
         private void Window_MouseDown(object sender, MouseButtonEventArgs e)
@@ -841,11 +978,38 @@ namespace EasyPlay.Views
             }
         }
 
+        private void RenderMode_Click(object sender, RoutedEventArgs e)
+        {
+            _videoRenderer = _videoRenderer switch
+            {
+                VideoRenderer.Auto => VideoRenderer.DirectX,
+                VideoRenderer.DirectX => VideoRenderer.DirectDraw,
+                VideoRenderer.DirectDraw => VideoRenderer.Software,
+                VideoRenderer.Software => VideoRenderer.Auto,
+                _ => VideoRenderer.Auto
+            };
+
+            var modeName = _videoRenderer switch
+            {
+                VideoRenderer.Auto => "خودکار (پیش‌فرض)",
+                VideoRenderer.DirectX => "DirectX (سخت‌افزاری)",
+                VideoRenderer.DirectDraw => "DirectDraw (متوسط)",
+                VideoRenderer.Software => "نرم‌افزاری (کند)",
+                _ => "خودکار"
+            };
+
+            CustomMessageBox.ShowInfo(
+                $"حالت رندرینگ: {modeName}\n\nویدیو مجدداً بارگذاری می‌شود.",
+                "تغییر حالت رندرینگ");
+
+            ReinitializePlayer();
+        }
+
         #endregion
 
         #region Keyboard Shortcuts
 
-        private void Window_KeyDown(object sender, KeyEventArgs e)
+        private void Window_PreviewKeyDown(object sender, KeyEventArgs e)
         {
             if (_mediaPlayer == null) return;
 
@@ -854,10 +1018,12 @@ namespace EasyPlay.Views
             switch (e.Key)
             {
                 case Key.Space:
+                    ShowControls();
                     PlayPause_Click(sender, e);
                     e.Handled = true;
                     break;
                 case Key.Escape:
+                    ShowControls();
                     if (_isFullscreen) ToggleFullscreen();
                     else Close();
                     e.Handled = true;
@@ -906,7 +1072,6 @@ namespace EasyPlay.Views
                     e.Handled = true;
                     break;
             }
-            ShowControls();
         }
 
         #endregion
@@ -938,6 +1103,7 @@ namespace EasyPlay.Views
                     _hideControlsTimer?.Stop();
                     _seekOverlayTimer?.Stop();
                     _volumeOverlayTimer?.Stop();
+                    _retryTimer?.Stop();
                 });
 
                 if (_mediaPlayer != null)
@@ -966,10 +1132,14 @@ namespace EasyPlay.Views
                     try { File.Delete(_fontTempPath); } catch { }
                 }
 
-                Application.Current.Dispatcher.Invoke(() =>
+                try
                 {
-                    this.Close();
-                });
+                    Application.Current.Dispatcher.Invoke(() =>
+                    {
+                        this.Close();
+                    });
+                }
+                catch { }
             });
         }
 
